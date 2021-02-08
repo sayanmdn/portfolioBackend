@@ -1,6 +1,7 @@
 
-const mongo_password = "my-super-secret-password"
-const username = "sayanmdn2"
+const username = process.env.MONGO_USERNAME
+const mongo_password = process.env.MONGO_PASSWORD
+
 const mongoose = require('mongoose');
 
 var uri = "mongodb+srv://"+username+":"+mongo_password+"@cluster0.9l02g.gcp.mongodb.net/portfolio-db?retryWrites=true&w=majority"

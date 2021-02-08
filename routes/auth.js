@@ -1,5 +1,7 @@
 var express = require('express');
 const userModel = require('../model/User')
+const dataModel = require('../model/Data')
+
 var router = express.Router();
 const userValidation = require('../validation/user')
 var bcrypt = require('bcryptjs')
@@ -76,4 +78,28 @@ router.post('/login', async function (req, res) {
 
     // res.send('Logged in!!!')
   })
+
+  router.post('/save', async function (req, res) {
+    console.log(req.body)
+      
+      // ADD DATA
+      const data = new dataModel({
+        userId: req.body.userId,
+        data: req.body.data
+      })
+    try{
+      const savedData = await data.save()
+      console.log('Data save success log: '+ savedData)
+      res.send({code:"dataSaved",
+      message: {
+        id: savedData._id,
+        // data: savedData.data
+      }})
+    }catch(err){
+      res.status(400).send(err)
+      console.log(err)
+    }
+  })
+
+
 module.exports = router;
