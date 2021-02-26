@@ -20,7 +20,7 @@ app.use('/post',postRoute)
 
 app.get('/', (req, res) => {
   console.log(JSON.stringify(req.body))
-  res.send('Helcome! This is the portfolio backend')
+  res.send('Helcome! This is the portfolio backend v2')
 })
 
 app.listen(port, () => {
