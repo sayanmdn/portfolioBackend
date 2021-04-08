@@ -22,7 +22,7 @@ router.post('/signup', async function (req, res) {
     // CHECKING IS EMAIL ALREADY EXISTS
     const emailExist = await userModel.findOne({email: req.body.email})
     console.log('Email exists log: '+ emailExist)
-    if(emailExist) return res.send('Email already exists')
+    if(emailExist) return res.status(400).send('Email already exists')
 
     // HSH PASSWORDS
     const salt = await bcrypt.genSalt(10)
@@ -52,13 +52,13 @@ router.post('/login', async function (req, res) {
     // VALIDATION
     const {error} = userValidation.checkLogin(req.body)
     if (error != null) {
-        return res.send({code: "validationFalse", message: error.details[0].message})
+        return res.status(400).send({code: "validationFalse", message: error.details[0].message})
         // return res.send(error)
     }
 
     // CHECKING IS EMAIL ALREADY EXISTS
     const userByEmail = await userModel.findOne({email: req.body.email})
-    if(!userByEmail) return res.send('Email do not exists')
+    if(!userByEmail) return res.status(400).send('Email do not exists')
 
     // HSH PASSWORDS
     const salt = await bcrypt.genSalt(10)
@@ -66,7 +66,7 @@ router.post('/login', async function (req, res) {
 
     // VALID PASSWORD
     const validPass = await bcrypt.compare(req.body.password, userByEmail.password)
-    if(!validPass) return res.send('Not valid password')
+    if(!validPass) return res.status(400).send('Not valid password')
 
     // SEND JWT LOGIN TOKENS
     var token = jwt.sign({id: userByEmail._id, name:userByEmail.name}, process.env.SECRET_JWT_TOKEN)
@@ -100,6 +100,28 @@ router.post('/login', async function (req, res) {
       console.log(err)
     }
   })
+
+// UNDER DEV
+
+router.post('/getdata', async function (req, res) {
+  const token = req.body.token
+  // console.log(req)
+  if(!token) return res.status(400).send({code:"tokenNotReceived", message: token})
+
+  try{
+      const verified = jwt.verify(token, process.env.SECRET_JWT_TOKEN)
+      console.log('verified log: '+ JSON.stringify(verified))
+
+      let givenUserId = verified.id;
+      const returnedData = await dataModel.find({userId: givenUserId})
+      // console.log('Email exists log: '+ returnedData)
+      if(returnedData) return res.status(400).send(returnedData)
+      res.status(200).send({code:"dataNotFound", message: returnedData})
+  } catch (err){
+      res.status(400).send('tokenInvalid'+ err)
+  }
+
+})
 
 
 module.exports = router;

@@ -19,15 +19,16 @@ router.post('/private', verify, async function (req, res) {
 router.post('/isAuthenticated', function (req, res) {
     const token = req.body.token
     // console.log(req)
-    if(!token) return res.send({code:"tokenNotReceived", message: token})
+    if(!token) return res.status(400).send({code:"tokenNotReceived", message: token})
 
     try{
         const verified = jwt.verify(token, process.env.SECRET_JWT_TOKEN)
-        res.send({code:"tokenValid", message: verified})
+        res.status(200).send({code:"tokenValid", message: verified})
     } catch (err){
         res.status(400).send('tokenInvalid')
     }
 
 })
+
 
 module.exports = router;
