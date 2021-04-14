@@ -1,6 +1,9 @@
 var express = require('express');
 const userModel = require('../model/User')
 const dataModel = require('../model/Data')
+const otpModel = require('../model/OTP')
+const nodemailer = require("nodemailer");
+const getMessageHTML = require('../assets/otpEmail')
 
 var router = express.Router();
 const userValidation = require('../validation/user')
@@ -19,6 +22,11 @@ router.post('/signup', async function (req, res) {
         // return res.send(error)
     }
 
+    // Check OTP
+    const otpFromDB = await otpModel.findOne({email: req.body.email})
+    console.log(otpFromDB)
+    if(otpFromDB.otp !== req.body.otp) return res.send('OTP did not match')
+    
     // CHECKING IS EMAIL ALREADY EXISTS
     const emailExist = await userModel.findOne({email: req.body.email})
     console.log('Email exists log: '+ emailExist)
@@ -123,6 +131,68 @@ router.post('/getdata', async function (req, res) {
       res.status(400).send('tokenInvalid'+ err)
   }
 
+})
+
+// OTP Service
+router.post('/otpsend', async function (req, res) {
+  console.log(req.body)
+    // VALIDATION
+    const {error} = userValidation.checkEmail(req.body)
+    if (error != null) {
+        console.log('OTP service email validation log: '+ error)
+        return res.send(
+            { 
+              code:"validationFalse",
+              message: error.details[0].message
+          }
+      )
+      // return res.send(error)
+    }
+
+  var rand = Math.floor(100000 + Math.random() * 900000)
+
+    // ADD OTP Model
+    const otp = new otpModel({
+      email: req.body.email,
+      otp: rand
+    })
+    console.log("New otp generated is "+rand)
+  
+
+    // nodemailer
+    var transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+             user: 'sayantanswebapps@gmail.com',
+             pass: '9434243451'
+         }
+     });
+     const mailOptions = {
+      from: 'sayantanswebapps@gmail.com', // sender address
+      to: req.body.email, // list of receivers
+      subject: 'Your OTP is here', // Subject line
+      html: getMessageHTML(rand) // plain text body
+    };
+    transporter.sendMail(mailOptions, function (err, info) {
+      if(err)
+        console.log(err)
+      else
+        console.log(info);
+   });
+
+   // OTP save to DB
+   try{
+    const savedOtp = await otp.save()
+    console.log('Signup success log: '+ savedOtp)
+    res.send({code:"otpSent",
+    message: {
+      id: savedOtp._id,
+      email: savedOtp.email
+    }})
+  }catch(err){
+    res.status(400).send(err)
+    console.log(err)
+  }
 })
 
 
