@@ -73,7 +73,9 @@ router.post('/login', async function (req, res) {
     return res.header('auth-token', token).send(
       {
       code: "Loggedin",
-      message: token
+      token: token,
+      user: {id: userByEmail._id, name:userByEmail.name}
+      //flag22
       })
 
     // res.send('Logged in!!!')
