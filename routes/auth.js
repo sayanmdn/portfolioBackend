@@ -115,7 +115,7 @@ router.post('/getdata', async function (req, res) {
       let givenUserId = verified.id;
       const returnedData = await dataModel.find({userId: givenUserId})
       // console.log('Email exists log: '+ returnedData)
-      if(returnedData) return res.status(400).send(returnedData)
+      if(returnedData) return res.status(200).send(returnedData)
       res.status(200).send({code:"dataNotFound", message: returnedData})
   } catch (err){
       res.status(400).send('tokenInvalid'+ err)
