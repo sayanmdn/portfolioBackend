@@ -91,10 +91,25 @@ router.post('/login', async function (req, res) {
 
   router.post('/save', async function (req, res) {
     console.log(req.body)
+
+    // VERIFY TOKEN
+    let token = req.body.token
+
+    if(!token) return res.status(400).send({code:"tokenNotReceived", message: token})
+
+  try{
+      const verified = jwt.verify(token, process.env.SECRET_JWT_TOKEN)
+      console.log('verified log: '+ JSON.stringify(verified))
+
+      var givenUserId = verified.id;
+      
+  } catch (err){
+      res.status(400).send('tokenInvalid'+ err)
+  }
       
       // ADD DATA
       const data = new dataModel({
-        userId: req.body.userId,
+        userId: givenUserId,
         data: req.body.data
       })
     try{
