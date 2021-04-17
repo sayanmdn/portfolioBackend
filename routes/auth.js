@@ -23,9 +23,9 @@ router.post('/signup', async function (req, res) {
     }
 
     // Check OTP
-    const otpFromDB = await otpModel.findOne({email: req.body.email})
-    console.log(otpFromDB)
-    if(otpFromDB.otp !== req.body.otp) return res.send('OTP did not match')
+    const otpFromDB = await otpModel.find({email: req.body.email})
+    console.log("OTP From DB : "+otpFromDB)
+    if(otpFromDB[otpFromDB.length -1].otp !== req.body.otp) return res.send('OTP did not match')
     
     // CHECKING IS EMAIL ALREADY EXISTS
     const emailExist = await userModel.findOne({email: req.body.email})
