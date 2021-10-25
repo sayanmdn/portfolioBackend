@@ -19,9 +19,9 @@
     "express": "^4.17.1",
     "https": "^1.0.0",
     "jsonwebtoken": "^8.5.1",
-    "mongoose": "^5.13.9",
-    "nodemailer": "^6.6.5",
-    "nodemon": "^2.0.12",
+    "mongoose": "^5.13.12",
+    "nodemailer": "^6.7.0",
+    "nodemon": "^2.0.14",
     "path": "^0.12.7",
     "winston": "^3.3.3"
   }
