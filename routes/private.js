@@ -1,6 +1,6 @@
 var router = require('express').Router();
 const jwt = require('jsonwebtoken')
-
+const logger = require('../logger')
 const verify = require('../verifyToken')
 const userModel = require('../model/User')
 
@@ -18,7 +18,7 @@ router.post('/private', verify, async function (req, res) {
 
 router.post('/isAuthenticated', function (req, res) {
     const token = req.body.token
-    // console.log(req)
+    // logger(req)
     if(!token) return res.status(400).send({code:"tokenNotReceived", message: token})
 
     try{

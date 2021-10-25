@@ -4,7 +4,7 @@ const dataModel = require('../model/Data')
 const otpModel = require('../model/OTP')
 const nodemailer = require("nodemailer");
 const getMessageHTML = require('../assets/otpEmail')
-
+const logger = require('../logger')
 var router = express.Router();
 const userValidation = require('../validation/user')
 var bcrypt = require('bcryptjs')
@@ -12,11 +12,11 @@ var jwt = require('jsonwebtoken');
 
 
 router.post('/signup', async function (req, res) {
-  console.log(req.body)
+  logger.info(req.body)
     // VALIDATION
     const {error} = userValidation.checkSignup(req.body)
     if (error != null) {
-        console.log('validation log: '+ error)
+        logger.info('validation log: '+ error)
         return res.send({code:"validationFalse",
         message: error.details[0].message})
         // return res.send(error)
@@ -24,12 +24,12 @@ router.post('/signup', async function (req, res) {
 
     // Check OTP
     const otpFromDB = await otpModel.find({email: req.body.email})
-    console.log("OTP From DB : "+otpFromDB)
+    logger.info("OTP From DB : "+otpFromDB)
     if(otpFromDB[otpFromDB.length -1].otp !== req.body.otp) return res.send('OTP did not match')
     
     // CHECKING IS EMAIL ALREADY EXISTS
     const emailExist = await userModel.findOne({email: req.body.email})
-    console.log('Email exists log: '+ emailExist)
+    logger.info('Email exists log: '+ emailExist)
     if(emailExist) return res.status(400).send('Email already exists')
 
     // HSH PASSWORDS
@@ -44,7 +44,7 @@ router.post('/signup', async function (req, res) {
     })
   try{
     const saveUser = await user.save()
-    console.log('Signup success log: '+ saveUser)
+    logger.info('Signup success log: '+ saveUser)
     res.send({code:"userCreated",
     message: {
       id: saveUser._id,
@@ -52,7 +52,7 @@ router.post('/signup', async function (req, res) {
     }})
   }catch(err){
     res.status(400).send(err)
-    console.log(err)
+    logger.info(err)
   }
 })
 
@@ -90,7 +90,7 @@ router.post('/login', async function (req, res) {
   })
 
   router.post('/save', async function (req, res) {
-    console.log(req.body)
+    logger.info(req.body)
 
     // VERIFY TOKEN
     let token = req.body.token
@@ -99,7 +99,7 @@ router.post('/login', async function (req, res) {
 
   try{
       const verified = jwt.verify(token, process.env.SECRET_JWT_TOKEN)
-      console.log('verified log: '+ JSON.stringify(verified))
+      logger.info('verified log: '+ JSON.stringify(verified))
 
       var givenUserId = verified.id;
       
@@ -114,7 +114,7 @@ router.post('/login', async function (req, res) {
       })
     try{
       const savedData = await data.save()
-      console.log('Data save success log: '+ savedData)
+      logger.info('Data save success log: '+ savedData)
       res.send({code:"dataSaved",
       message: {
         id: savedData._id,
@@ -122,7 +122,7 @@ router.post('/login', async function (req, res) {
       }})
     }catch(err){
       res.status(400).send(err)
-      console.log(err)
+      logger.info(err)
     }
   })
 
@@ -130,16 +130,18 @@ router.post('/login', async function (req, res) {
 
 router.post('/getdata', async function (req, res) {
   const token = req.body.token
-  // console.log(req)
+  // logger.info(req)
+  // logger.info("information log ");
   if(!token) return res.status(400).send({code:"tokenNotReceived", message: token})
 
   try{
       const verified = jwt.verify(token, process.env.SECRET_JWT_TOKEN)
-      console.log('verified log: '+ JSON.stringify(verified))
+      logger.info('verified log: '+ JSON.stringify(verified))
+      logger.info('verified log: '+ JSON.stringify(verified))
 
       let givenUserId = verified.id;
       const returnedData = await dataModel.find({userId: givenUserId})
-      // console.log('Email exists log: '+ returnedData)
+      // logger.info('Email exists log: '+ returnedData)
       if(returnedData) return res.status(200).send(returnedData)
       res.status(200).send({code:"dataNotFound", message: returnedData})
   } catch (err){
@@ -150,11 +152,11 @@ router.post('/getdata', async function (req, res) {
 
 // OTP Service
 router.post('/otpsend', async function (req, res) {
-  console.log(req.body)
+  logger.info(req.body)
     // VALIDATION
     const {error} = userValidation.checkEmail(req.body)
     if (error != null) {
-        console.log('OTP service email validation log: '+ error)
+        logger.info('OTP service email validation log: '+ error)
         return res.send(
             { 
               code:"validationFalse",
@@ -171,7 +173,7 @@ router.post('/otpsend', async function (req, res) {
       email: req.body.email,
       otp: rand
     })
-    console.log("New otp generated is "+rand)
+    logger.info("New otp generated is "+rand)
   
 
     // nodemailer
@@ -190,15 +192,15 @@ router.post('/otpsend', async function (req, res) {
     };
     transporter.sendMail(mailOptions, function (err, info) {
       if(err)
-        console.log(err)
+        logger.info(err)
       else
-        console.log(info);
+        logger.info(info);
    });
 
    // OTP save to DB
    try{
     const savedOtp = await otp.save()
-    console.log('Signup success log: '+ savedOtp)
+    logger.info('Signup success log: '+ savedOtp)
     res.send({code:"otpSent",
     message: {
       id: savedOtp._id,
@@ -206,7 +208,7 @@ router.post('/otpsend', async function (req, res) {
     }})
   }catch(err){
     res.status(400).send(err)
-    console.log(err)
+    logger.info(err)
   }
 })
 
