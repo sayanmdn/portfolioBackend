@@ -17,8 +17,10 @@ router.post('/private', verify, async function (req, res) {
 })
 
 router.post('/isAuthenticated', function (req, res) {
-    const token = req.body.token
-    // logger(req)
+    // const token = req.body.token
+    const token = req.headers.authorization.slice(6)
+    logger.info(JSON.stringify(req, getCircularReplacer()));
+    // console.log(req)
     if(!token) return res.status(400).send({code:"tokenNotReceived", message: token})
 
     try{
@@ -29,6 +31,19 @@ router.post('/isAuthenticated', function (req, res) {
     }
 
 })
+
+const getCircularReplacer = () => {
+    const seen = new WeakSet();
+    return (key, value) => {
+      if (typeof value === "object" && value !== null) {
+        if (seen.has(value)) {
+          return;
+        }
+        seen.add(value);
+      }
+      return value;
+    };
+  };
 
 
 module.exports = router;
