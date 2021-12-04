@@ -9,6 +9,8 @@ var router = express.Router();
 const userValidation = require('../validation/user')
 var bcrypt = require('bcryptjs')
 var jwt = require('jsonwebtoken');
+const otpEmail = process.env.EMAIL_USER
+const otpEmailPassword = process.env.EMAIL_PASS
 
 
 router.post('/signup', async function (req, res) {
@@ -180,8 +182,8 @@ router.post('/otpsend', async function (req, res) {
     var transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-             user: 'sayantanswebapps@gmail.com',
-             pass: '9434243451'
+             user: otpEmail,
+             pass: otpEmailPassword,
          }
      });
      const mailOptions = {
@@ -200,7 +202,7 @@ router.post('/otpsend', async function (req, res) {
    // OTP save to DB
    try{
     const savedOtp = await otp.save()
-    logger.info('Signup success log: '+ savedOtp)
+    logger.info('otpsend success log: '+ savedOtp)
     res.send({code:"otpSent",
     message: {
       id: savedOtp._id,
