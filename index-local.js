@@ -1,5 +1,4 @@
 const express = require("express");
-const serverless = require("serverless-http");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const authRouter = require("./routes/auth");
@@ -21,4 +20,6 @@ app.get("/", (req, res) => {
   res.send("Helcome! This is the portfolio backend v2");
 });
 
-module.exports.handler = serverless(app);
+app.listen(port, () => {
+  console.log(`App listening at http://localhost:${port}`);
+});
