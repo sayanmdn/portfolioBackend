@@ -2,15 +2,20 @@ var express = require("express");
 const userModel = require("../model/User");
 const dataModel = require("../model/Data");
 const otpModel = require("../model/OTP");
-const nodemailer = require("nodemailer");
 const getMessageHTML = require("../assets/otpEmail");
 const logger = require("../logger");
 var router = express.Router();
 const userValidation = require("../validation/user");
 var bcrypt = require("bcryptjs");
 var jwt = require("jsonwebtoken");
-const otpEmail = process.env.EMAIL_USER;
-const otpEmailPassword = process.env.EMAIL_PASS;
+
+var aws = require("aws-sdk");
+aws.config.update({
+  accessKeyId: process.env.AWS_ACCESSKEY,
+  secretAccessKey: process.env.AWS_SECRET_ACCESSKEY,
+  region: "ap-southeast-1",
+});
+const ses = new aws.SES({ apiVersion: "2010-12-01" });
 
 router.post("/signup", async function (req, res) {
   logger.info(req.body);
@@ -186,26 +191,40 @@ router.post("/otpsend", async function (req, res) {
     email: req.body.email,
     otp: rand,
   });
+
   logger.info("New otp generated is " + rand);
 
-  // nodemailer
-  var transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: otpEmail,
-      pass: otpEmailPassword,
+  const params = {
+    Destination: {
+      // Email address/addresses that you want to send your email
+      // Should be an array
+      ToAddresses: [req.body.email],
     },
-  });
-  const mailOptions = {
-    from: "sayantanswebapps@gmail.com", // sender address
-    to: req.body.email, // list of receivers
-    subject: "Your OTP is here", // Subject line
-    html: getMessageHTML(rand), // plain text body
+    Message: {
+      Body: {
+        Html: {
+          // HTML Format of the email
+          Charset: "UTF-8",
+          Data: getMessageHTML(rand),
+        },
+      },
+      Subject: {
+        Charset: "UTF-8",
+        Data: "Your OTP is here",
+      },
+    },
+    Source: "info@mail.sayantanmishra.com",
   };
-  transporter.sendMail(mailOptions, function (err, info) {
-    if (err) logger.info(err);
-    else logger.info(info);
-  });
+
+  const sendEmail = ses.sendEmail(params).promise();
+
+  sendEmail
+    .then((data) => {
+      logger.info("email submitted to SES", data);
+    })
+    .catch((error) => {
+      logger.info(error);
+    });
 
   // OTP save to DB
   try {
