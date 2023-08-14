@@ -1,3 +1,6 @@
+plugins:
+  - serverless-offline
+
 service: sample-app
 provider:
   name: aws

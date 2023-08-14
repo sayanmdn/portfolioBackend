@@ -1,21 +1,28 @@
 var express = require("express");
+const axios = require("axios");
+const { Configuration, OpenAIApi } = require("openai");
+var bcrypt = require("bcryptjs");
+var jwt = require("jsonwebtoken");
+var aws = require("aws-sdk");
+
 const userModel = require("../model/User");
 const dataModel = require("../model/Data");
 const otpModel = require("../model/OTP");
 const getMessageHTML = require("../assets/otpEmail");
 const logger = require("../logger");
-var router = express.Router();
 const userValidation = require("../validation/user");
-var bcrypt = require("bcryptjs");
-var jwt = require("jsonwebtoken");
 
-var aws = require("aws-sdk");
+var router = express.Router();
 aws.config.update({
   accessKeyId: process.env.AWS_ACCESSKEY,
   secretAccessKey: process.env.AWS_SECRET_ACCESSKEY,
   region: "ap-southeast-1",
 });
 const ses = new aws.SES({ apiVersion: "2010-12-01" });
+
+const configuration = new Configuration({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 router.post("/signup", async function (req, res) {
   logger.info(req.body);
@@ -240,6 +247,60 @@ router.post("/otpsend", async function (req, res) {
   } catch (err) {
     res.status(400).send(err);
     logger.info(err);
+  }
+});
+
+router.post("/speech", async function (req, res) {
+  const token = req.headers.authorization.slice(6);
+  const { speech } = req.body;
+
+  if (!token)
+    return res.status(400).send({ code: "tokenNotReceived", message: token });
+
+  if (!speech)
+    return res.status(400).send({ code: "speechNotReceived", message: token });
+
+  try {
+    const verified = jwt.verify(token, process.env.SECRET_JWT_TOKEN);
+  } catch (err) {
+    res.status(400).send("tokenInvalid" + err);
+  }
+
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+  };
+
+  const data = {
+    model: "gpt-3.5-turbo",
+    max_tokens: 150,
+    messages: [
+      {
+        role: "system",
+        content: "You are a helpful assistant.",
+      },
+      {
+        role: "user",
+        content: speech,
+      },
+    ],
+  };
+
+  try {
+    const response = await axios.post(
+      "https://api.openai.com/v1/chat/completions",
+      data,
+      { headers: headers }
+    );
+
+    console.log(response.data.choices[0].message.content);
+    res.status(200).send({
+      code: "speechResponse",
+      message: response.data.choices[0].message.content,
+    });
+  } catch (e) {
+    console.log("Open AI API Request Failed", e);
+    res.status(400).send({ code: "openaiError", message: e });
   }
 });
 

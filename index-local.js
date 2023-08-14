@@ -1,5 +1,4 @@
 const express = require("express");
-const bodyParser = require("body-parser");
 const cors = require("cors");
 const authRouter = require("./routes/auth");
 const postRoute = require("./routes/private");
@@ -9,7 +8,12 @@ const db = require("./db");
 
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
 const port = 8080;
 
 app.use("/user", authRouter);
